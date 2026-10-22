@@ -1,3 +1,4 @@
+import { StudentIdUnavailableError } from '../../../lib/student-id';
 import { saveSubmission, listSubmissions } from '../../../lib/submissions';
 import { reflectionError } from '../../../lib/reflection';
 import { bucket, settings, instructor, json, sameOrigin, validateFile } from '../../../lib/portal';
@@ -48,7 +49,6 @@ export async function POST(req: Request) {
   const ext = file.name.split('.').pop()!.toLowerCase(); const filename = file.name.replace(/[\r\n\x00-\x1f]/g,'').slice(0,180);
   const record = {id,name,title,level,stream,reflection,filename,size:String(file.size),submittedAt,extension:ext};
   await bucket().put('documents/'+id, file.stream(), {httpMetadata:{contentType:ext === 'pdf'?'application/pdf':ext === 'doc'?'application/msword':'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}});
-  try { await saveSubmission(record); } catch(e) {await bucket().delete('documents/'+id); throw e;}
-  return json({ok:true,receipt:record},201);
- } catch {return json({error:'Your submission could not be saved. Please try again. You will receive a receipt after a successful upload.'},503);}
+  try { const receipt=await saveSubmission(record); return json({ok:true,receipt},201); } catch(e) {await bucket().delete('documents/'+id); throw e;}
+ } catch(error) {if(error instanceof StudentIdUnavailableError)return json({error:error.message},503);return json({error:'Your submission could not be saved. Please try again. You will receive a receipt after a successful upload.'},503);}
 }

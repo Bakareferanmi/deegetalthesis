@@ -10,7 +10,8 @@
     "build": "vite build",
     "deploy": "node scripts/deploy.mjs",
     "instructor:setup": "node scripts/setup-instructor.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-vm-modules tests/standalone-cloudflare.mjs"
   },
   "dependencies": {
     "react": "19.2.6",

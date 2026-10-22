@@ -8,4 +8,5 @@ if(!databaseName||databaseName.startsWith('YOUR_')||config.d1_databases[0].datab
 const tool=(path,args)=>{const result=spawnSync(process.execPath,[fileURLToPath(new URL('../node_modules/'+path,import.meta.url)),...args],{stdio:'inherit',env:process.env});if(result.error)throw result.error;if(result.status!==0)process.exit(result.status??1)};
 tool('vite/bin/vite.js',['build']);
 tool('wrangler/bin/wrangler.js',['d1','execute',databaseName,'--remote','--file=schema.sql','--config',configPath]);
+tool('wrangler/bin/wrangler.js',['d1','migrations','apply',databaseName,'--remote','--config',configPath]);
 tool('wrangler/bin/wrangler.js',['deploy','--config',configPath]);

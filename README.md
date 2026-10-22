@@ -80,3 +80,24 @@ bucket still require the live upload test above after deploying in your account.
 Wrangler is pinned to 4.151.3 with @cloudflare/workers-types 5.20261022.1,
 matching the dependency update used during setup. Update these together to
 avoid an npm peer dependency conflict.
+
+## Student IDs
+
+Each new successful submission is assigned an ID such as DEEGEETAL4827.
+The four-digit suffix is randomly generated on the server; a unique database
+index prevents duplicates, and collisions are retried. These IDs identify
+submissions and are not passwords or download credentials.
+
+The student sees the ID on an animated confirmation card, can copy it, and
+can save a receipt containing it. The instructor inbox can search by ID.
+Existing submissions remain readable and are not given invented IDs.
+
+After updating the source, run npm run deploy. It creates any missing base
+tables, applies pending D1 migrations, then deploys the app. Confirm the
+migration prompt. The student_id column is added without deleting records.
+Subsequent deployments skip migrations already applied.
+
+Four decimal digits provide 10,000 unique IDs. If an ID cannot be allocated,
+the submission shows an error instead of displaying an unrecorded ID.
+
+Run npm test and npm run build to check the submission flow and frontend.
