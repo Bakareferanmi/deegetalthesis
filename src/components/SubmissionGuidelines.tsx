@@ -4,7 +4,7 @@ export default function SubmissionGuidelines({instructions,loading,error,onRetry
   <div className="guidelines-heading"><BookOpen size={20}/><div><span>START HERE</span><h2 id="mobile-guidelines-title">Submission guidelines</h2></div></div>
   <p className="guidelines-assignment">{loading?'Loading your instructor’s guidelines…':error?'Your instructor’s guidelines could not be loaded.':instructions || 'Submit your assigned thesis as one complete document. Include a title page, your research, and references.'}</p>
   {error&&<button className="guidelines-retry" onClick={onRetry}>Retry loading guidelines</button>}
-  <ul><li><FileText size={16}/><span>One PDF or Word document. Maximum <strong>10 MB</strong>.</span></li><li><MessageSquareText size={16}/><span>Explain what you learnt in <strong>1–299 words</strong>.</span></li></ul>
+  <ul><li><FileText size={16}/><span>One PDF with <strong>at least 5 pages</strong>. Maximum <strong>10 MB</strong>. Export Word documents to PDF first.</span></li><li><MessageSquareText size={16}/><span>Explain what you learnt in <strong>300–500 words</strong>.</span></li></ul>
   <button className="guidelines-more" onClick={onOpenGuide}>Read the full submission guide<ArrowUpRight size={16}/></button>
  </section>;
 }

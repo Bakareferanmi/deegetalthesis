@@ -72,7 +72,7 @@ identity headers are ignored in this standalone deployment.
 
 The export is checked for frontend compilation and Worker bundling. Automated
 route tests check instructor login, tampered/expired sessions, authorization,
-D1 writes, private downloads and the 299-word limit. Your remote database and
+D1 writes, private previews/downloads, 300–500-word reflections and the five-page PDF minimum. Your remote database and
 bucket still require the live upload test above after deploying in your account.
 
 ## Tool versions
@@ -177,3 +177,30 @@ Referer origin can serve as a fallback. A conflicting or null Origin remains
 rejected, and neither header being present remains rejected. An already-open
 unverified sign-in page offers a link to start again on the Worker hostname.
 Password entry disables automatic capitalisation and offers a Show/Hide button.
+
+## Current thesis submission rules
+
+New submissions must be a readable, unprotected PDF, no larger than 10 MB,
+with at least five actual PDF pages. Students writing in Word should use
+Save As or Export to PDF. The browser validates the chosen PDF and shows its
+page count; the Worker independently parses the document before saving it.
+A page-count field supplied by the browser is never trusted. No database
+migration is needed for this rule. Existing submissions are retained.
+
+What I learnt is required and must contain 300 through 500 words inclusive.
+The live counter, review button, mobile guidelines and full guide use the same
+limits. The Worker repeats the word-count check, so bypassing browser controls
+cannot submit an out-of-range reflection. A 10,000-character safety limit also
+applies. Older reflections remain readable.
+
+In the instructor inbox, View file opens a private, self-hosted PDF.js reader
+with previous/next page, zoom and page text. It works without saving a file to
+the device or sending the PDF to an external viewer. The PDF endpoint checks
+the instructor session for preview and download requests, and sends private,
+no-store responses. Download remains optional. Older Word submissions stay
+available to download; they cannot be previewed by this PDF reader.
+
+Install the updated dependencies with npm install before building/deploying.
+The Vite build copies the PDF reader's fonts, character maps and WASM assets
+into dist/client/pdfjs for both Cloudflare and Vercel. The PDF parser and reader
+load only when needed. Deploy the updated Worker as well as the Vercel frontend.

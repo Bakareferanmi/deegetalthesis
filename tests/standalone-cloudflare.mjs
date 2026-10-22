@@ -6,6 +6,7 @@ import {AsyncLocalStorage} from 'node:async_hooks';
 import {DatabaseSync} from 'node:sqlite';
 import assert from 'node:assert/strict';
 import ts from 'typescript';
+import {PDFDocument,PDFNumber,PDFName} from 'pdf-lib';
 const root=resolve(process.argv[2]||resolve(dirname(fileURLToPath(import.meta.url)),'..'));
 const schema=await readFile(resolve(root,'schema.sql'),'utf8');
 const migration=await readFile(resolve(root,'migrations/0001_student_ids.sql'),'utf8');
@@ -22,10 +23,11 @@ const env={DB,BUCKET,ASSETS:{fetch:async()=>new Response('<html>student portal</
 const context=vm.createContext({URL,Response,Request,File,FormData,TextDecoder,TextEncoder,Uint8Array,Date,crypto:testCrypto,ReadableStream,console,atob,btoa});
 const envModule=new vm.SyntheticModule(['env'],function(){this.setExport('env',env)},{context});
 const alsModule=new vm.SyntheticModule(['AsyncLocalStorage'],function(){this.setExport('AsyncLocalStorage',AsyncLocalStorage)},{context});
+const pdfModule=new vm.SyntheticModule(['PDFDocument'],function(){this.setExport('PDFDocument',PDFDocument)},{context});
 const modules=new Map();
 async function make(path){if(modules.has(path))return modules.get(path);const pending=(async()=>{const source=ts.transpileModule(await readFile(path,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;const mod=new vm.SourceTextModule(source,{context,identifier:path});return mod;})();modules.set(path,pending);return pending;}
 const module=await make(resolve(root,'worker/index.ts'));
-await module.link((spec,parent)=>spec==='cloudflare:workers'?envModule:spec==='node:async_hooks'?alsModule:make(resolve(dirname(parent.identifier),spec+'.ts')));
+await module.link((spec,parent)=>spec==='cloudflare:workers'?envModule:spec==='node:async_hooks'?alsModule:spec==='pdf-lib'?pdfModule:make(resolve(dirname(parent.identifier),spec+'.ts')));
 await module.evaluate();const worker=module.namespace.default;
 const origin='https://portal.example';
 async function request(path,options={},expected){const r=await worker.fetch(new Request(origin+path,options),env);if(expected!==undefined)assert.equal(r.status,expected,await r.clone().text());return r;}
@@ -51,25 +53,37 @@ assert.equal((await(await request('/api/portal',{headers:{Cookie:'__Host-deegeet
 await request('/api/portal',json({action:'setup'},cookie),200);
 const settings={action:'settings',deadline:new Date(Date.now()+86400000).toISOString(),instructions:'A test research assignment.',accepting:true};
 await request('/api/portal',json(settings),403);await request('/api/portal',json(settings,cookie),200);
-const input=(reflection,level='SS1',stream='Science')=>{const fd=new FormData();for(const [k,v] of Object.entries({name:'Test Student',title:'Solar energy in schools',level,stream,reflection}))fd.set(k,v);fd.set('file',new File(['%PDF-1.4\n%%EOF'],'thesis.pdf'));return{method:'POST',headers:{Origin:origin},body:fd}};
-await request('/api/portal',input(''),400);await request('/api/portal',input(Array(300).fill('learning').join(' ')),400);
+const words=n=>Array(n).fill('learning').join(' ');
+const validReflection=prefix=>prefix+' '+words(300-prefix.trim().split(/\s+/).length);
+async function fixturePdf(pages){const doc=await PDFDocument.create();for(let i=1;i<=pages;i++){const page=doc.addPage();page.drawText('Research thesis page '+i,{x:50,y:700});}return doc.save();}
+const fivePages=await fixturePdf(5),fourPages=await fixturePdf(4);
+const input=(reflection,level='SS1',stream='Science',bytes=fivePages,filename='thesis.pdf')=>{const fd=new FormData();for(const [k,v] of Object.entries({name:'Test Student',title:'Solar energy in schools',level,stream,reflection}))fd.set(k,v);fd.set('file',new File([bytes],filename));fd.set('pageCount','999');return{method:'POST',headers:{Origin:origin},body:fd}};
+for(const n of [0,1,299,501])await request('/api/portal',input(words(n)),400);
+const beforeRejected=files.size;
+const shortPdf=await(await request('/api/portal',input(words(300),'SS1','Science',fourPages),400)).json();assert.match(shortPdf.error,/4 pages/);
+const misleading=await PDFDocument.load(fourPages);misleading.catalog.Pages().set(PDFName.of('Count'),PDFNumber.of(999));const misleadingBytes=await misleading.save();const countSpoof=await(await request('/api/portal',input(words(300),'SS1','Science',misleadingBytes),400)).json();assert.match(countSpoof.error,/4 pages/);
+await request('/api/portal',input(words(300),'SS1','Science',new TextEncoder().encode('%PDF-1.4 /Type /Page /Type /Page /Type /Page /Type /Page /Type /Page %%EOF')),400);
+await request('/api/portal',input(words(300),'SS1','Science',fivePages,'thesis.docx'),400);
+const encrypted=await PDFDocument.load(fivePages);encrypted.context.trailerInfo.Encrypt=encrypted.context.register(encrypted.context.obj({Filter:PDFName.of('Standard')}));await request('/api/portal',input(words(300),'SS1','Science',await encrypted.save()),400);
+assert.equal(files.size,beforeRejected);assert.equal(sqlite.prepare('SELECT COUNT(*) AS count FROM submissions').get().count,0);
 forcedNumbers=[42];
-const submitted=await(await request('/api/portal',input(Array(299).fill('learning').join(' ')),201)).json();const id=submitted.receipt.id;assert.equal(submitted.receipt.studentId,'DEEGEETAL-SS1-SCI-0042');
-const row=sqlite.prepare('SELECT * FROM submissions WHERE id = ?').get(id);assert.equal(row.student_name,'Test Student');assert.equal(row.reflection.split(' ').length,299);assert.equal(row.document_key,'documents/'+id);assert.equal(row.student_id,'DEEGEETAL-SS1-SCI-0042');
-await request('/api/files/'+id,{headers:spoof},403);assert.equal(await(await request('/api/files/'+id,{headers:{Cookie:cookie}},200)).text(),'%PDF-1.4\n%%EOF');
+const submitted=await(await request('/api/portal',input(words(300)),201)).json();const id=submitted.receipt.id;assert.equal(submitted.receipt.studentId,'DEEGEETAL-SS1-SCI-0042');
+const row=sqlite.prepare('SELECT * FROM submissions WHERE id = ?').get(id);assert.equal(row.student_name,'Test Student');assert.equal(row.reflection.split(' ').length,300);assert.equal(row.document_key,'documents/'+id);assert.equal(row.student_id,'DEEGEETAL-SS1-SCI-0042');
+await request('/api/files/'+id,{headers:spoof},403);assert.deepEqual(new Uint8Array(await(await request('/api/files/'+id,{headers:{Cookie:cookie}},200)).arrayBuffer()),fivePages);
+await request('/api/files/'+id+'?view=inline',{headers:spoof},403);const inline=await request('/api/files/'+id+'?view=inline',{headers:{Cookie:cookie}},200);assert.match(inline.headers.get('Content-Disposition'),/^inline;/);assert.equal(inline.headers.get('Content-Type'),'application/pdf');assert.match(inline.headers.get('Cache-Control'),/no-store/);assert.deepEqual(new Uint8Array(await inline.arrayBuffer()),fivePages);
 assert.equal((await(await request('/api/portal?view=instructor',{headers:{Cookie:cookie}},200)).json()).submissions.length,1);
 forcedNumbers=[42,42,7001];
-const retried=await(await request('/api/portal',input('I learnt to explain my research clearly.'),201)).json();assert.equal(retried.receipt.studentId,'DEEGEETAL-SS1-SCI-7001');
+const retried=await(await request('/api/portal',input(words(500)),201)).json();assert.equal(retried.receipt.studentId,'DEEGEETAL-SS1-SCI-7001');
 forcedNumbers=[99,99,100];
-const concurrent=await Promise.all([request('/api/portal',input('I learnt how solar energy works.'),201),request('/api/portal',input('I learnt how to compare energy sources.'),201)]);
+const concurrent=await Promise.all([request('/api/portal',input(validReflection('I learnt how solar energy works.')),201),request('/api/portal',input(validReflection('I learnt how to compare energy sources.')),201)]);
 const ids=await Promise.all(concurrent.map(async r=>(await r.json()).receipt.studentId));assert.equal(new Set(ids).size,2);ids.forEach(id=>assert.match(id,/^DEEGEETAL-SS1-SCI-\d{4}$/));
-const beforeFailure=files.size;forcedNumbers=Array(12).fill(42);const busy=await(await request('/api/portal',input('I learnt how to write references.'),503)).json();assert.match(busy.error,/student ID/);assert.equal(files.size,beforeFailure);
+const beforeFailure=files.size;forcedNumbers=Array(12).fill(42);const busy=await(await request('/api/portal',input(validReflection('I learnt how to write references.')),503)).json();assert.match(busy.error,/student ID/);assert.equal(files.size,beforeFailure);
 const inbox=await(await request('/api/portal?view=instructor',{headers:{Cookie:cookie}},200)).json();assert.equal(new Set(inbox.submissions.map(r=>r.studentId)).size,4);assert.equal(inbox.submissions.find(r=>r.id===id).studentId,'DEEGEETAL-SS1-SCI-0042');
 
 // Each class/department gets its own random-number space.
 for(const [level,stream,code] of [['SS1','Art','ART'],['SS1','Commercial','COM'],['SS2','Science','SCI'],['SS2','Art','ART'],['SS2','Commercial','COM']]){
  forcedNumbers=[42];
- const result=await(await request('/api/portal',input('I learnt to present my findings.',level,stream),201)).json();
+ const result=await(await request('/api/portal',input(validReflection('I learnt to present my findings.'),level,stream),201)).json();
  assert.equal(result.receipt.studentId,`DEEGEETAL-${level}-${code}-0042`);
  assert.equal(sqlite.prepare('SELECT student_id FROM submissions WHERE id = ?').get(result.receipt.id).student_id,result.receipt.studentId);
 }
@@ -127,8 +141,14 @@ const loginPage=await request('/instructor-login',{},200);const loginHtml=await 
 const vercelConfig=JSON.parse(await readFile(resolve(root,'vercel.json'),'utf8'));const loginRedirect=vercelConfig.redirects.find(r=>r.source==='/instructor-login');assert.ok(loginRedirect);assert.equal(loginRedirect.permanent,false);assert.equal(new URL(loginRedirect.destination).pathname,'/instructor-login');assert.equal(new URL(loginRedirect.destination).origin,new URL(vercelConfig.rewrites.find(r=>r.source==='/api/:path*').destination).origin);
 env.PUBLIC_APP_ORIGIN='https://thesis.example.test/path';await request('/api/portal',proxied(),403);delete env.PUBLIC_APP_ORIGIN;
 
+// Preserve access to older Word submissions without exposing them to a third-party viewer.
+const oldWordId='22222222-2222-4222-8222-222222222222';
+sqlite.prepare('INSERT INTO submissions (id,student_name,thesis_title,class,department,reflection,document_key,filename,file_size,submitted_at,student_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(oldWordId,'Legacy Student','Old Word thesis','SS1','Art','Older reflection','documents/'+oldWordId,'legacy.docx',3,new Date().toISOString(),null);
+await BUCKET.put('documents/'+oldWordId,'old',{httpMetadata:{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}});
+await request('/api/files/'+oldWordId+'?view=inline',{headers:{Cookie:cookie}},415);assert.equal(await(await request('/api/files/'+oldWordId,{headers:{Cookie:cookie}},200)).text(),'old');
+
 for(let i=0;i<8;i++)await login('wrong-password','192.0.2.99',401);await login(env.INSTRUCTOR_PASSWORD,'192.0.2.99',429);
 const out=await request('/api/instructor-logout',{method:'POST',headers:{Origin:origin,Cookie:cookie}},200);assert.match(out.headers.get('Set-Cookie'),/Max-Age=0/);
 const saved=env.SESSION_SECRET;env.SESSION_SECRET='short';assert.equal((await(await request('/api/portal',{headers:{Cookie:cookie}},200)).json()).isInstructor,false);await login(env.INSTRUCTOR_PASSWORD,'192.0.2.5',503);env.SESSION_SECRET=saved;
 assert.equal(await(await request('/',{},200)).text(),'<html>student portal</html>');await request('/api/unknown',{},404);
-console.log('PASS: authenticated CSV exports, class/search filtering, Unicode/quotes/multiline text, spreadsheet formula protection, explicit frontend origin trust and untrusted-origin rejection; student ID format, leading zeros, collision retries, simultaneous submissions, saved IDs and non-destructive migration;  standalone instructor sign-in, spoofed identity rejection, tampered/expired sessions, rate limiting, setup, D1 submission rows, 299-word enforcement, private file downloads, logout and unconfigured-auth rejection.');
+console.log('PASS: authenticated CSV exports, class/search filtering, Unicode/quotes/multiline text, spreadsheet formula protection, explicit frontend origin trust and untrusted-origin rejection; student ID format, leading zeros, collision retries, simultaneous submissions, saved IDs and non-destructive migration;  standalone instructor sign-in, spoofed identity rejection, tampered/expired sessions, rate limiting, setup, D1 submission rows, 300–500-word limits and five-page PDF enforcement, private file downloads, logout and unconfigured-auth rejection.');
