@@ -1,1 +1,1 @@
-declare namespace Cloudflare { interface Env { DB:D1Database; BUCKET:R2Bucket; ASSETS:Fetcher; INSTRUCTOR_PASSWORD?:string; SESSION_SECRET?:string; INSTRUCTOR_EMAIL?:string; } }
+declare namespace Cloudflare { interface Env { DB:D1Database; BUCKET:R2Bucket; ASSETS:Fetcher; INSTRUCTOR_PASSWORD?:string; SESSION_SECRET?:string; INSTRUCTOR_EMAIL?:string; PUBLIC_APP_ORIGIN?:string; } }

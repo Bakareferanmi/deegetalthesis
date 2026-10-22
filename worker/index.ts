@@ -1,3 +1,4 @@
+import { GET as exportSubmissions } from '../app/api/export/route';
 import { requests } from '../lib/request-context';
 import { signIn,signOut,page } from '../lib/standalone-auth';
 import { GET, POST } from '../app/api/portal/route';
@@ -16,6 +17,7 @@ export default {
      if(request.method==='POST')return POST(request);
      return new Response('Method not allowed',{status:405});
     }
+    if(path==='/api/export')return request.method==='GET'?exportSubmissions(request):new Response('Method not allowed',{status:405});
     if(path.startsWith('/api/files/'))return request.method==='GET'?download(request,{params:Promise.resolve({id:path.slice('/api/files/'.length)})}):new Response('Method not allowed',{status:405});
     if(path.startsWith('/api/'))return Response.json({error:'Not found.'},{status:404});
     return env.ASSETS.fetch(request);

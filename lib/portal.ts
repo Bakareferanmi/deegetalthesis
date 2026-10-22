@@ -1,3 +1,4 @@
+import { trustedOrigin } from './request-origin';
 import { env } from 'cloudflare:workers';
 import { getChatGPTUser } from '../app/chatgpt-auth';
 export type Settings = { ownerId: string; deadline: string | null; instructions: string; accepting: boolean };
@@ -5,7 +6,7 @@ export function bucket() { if (!env.BUCKET) throw new Error('Document storage is
 export async function settings(): Promise<Settings | null> { const o = await bucket().get('workspace/settings.json'); return o ? o.json<Settings>() : null; }
 export async function instructor(s: Settings | null) { const u = await getChatGPTUser(); return !!(u && s && u.userId === s.ownerId); }
 export function json(data: unknown, status = 200) { return Response.json(data, {status, headers:{'Cache-Control':'no-store'}}); }
-export function sameOrigin(req: Request) { const o = req.headers.get('origin'); return !!o && o === new URL(req.url).origin; }
+export const sameOrigin=trustedOrigin;
 export async function validateFile(file: File) {
  const ext = file.name.split('.').pop()?.toLowerCase();
  if (!['pdf','doc','docx'].includes(ext || '')) return 'Use a PDF or Word document (.pdf, .doc, .docx).';

@@ -11,7 +11,8 @@
     "deploy": "node scripts/deploy.mjs",
     "instructor:setup": "node scripts/setup-instructor.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-vm-modules tests/standalone-cloudflare.mjs"
+    "test": "node --experimental-vm-modules tests/standalone-cloudflare.mjs",
+    "vercel:connect": "node scripts/connect-vercel.mjs"
   },
   "dependencies": {
     "react": "19.2.6",

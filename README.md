@@ -103,3 +103,48 @@ the submission shows an error instead of displaying an unrecorded ID.
 Run npm test and npm run build to check the submission flow and frontend.
 
 Student IDs include the submitted class (SS1 or SS2) and department: SCI for Science, ART for Art, COM for Commercial. The random four-digit suffix is unique within that class and department. Existing IDs remain unchanged.
+
+## Instructor IDs and CSV exports
+
+The submission inbox displays a labelled student ID for every new submission.
+Older records that predate IDs are labelled accordingly. IDs can be selected
+and searched. Export all CSV downloads every submission; Export filtered CSV
+appears when a class filter or search is active. Both exports require the
+instructor session and include IDs, names, classes, departments, thesis titles,
+reflections, document filenames, sizes, UTC dates and submission references.
+CSV uses UTF-8 with BOM for Excel, quotes commas/newlines, and neutralises
+spreadsheet formulas in student-supplied text. The files themselves stay private.
+
+## Hosting the frontend on Vercel
+
+This is a Vite frontend with a Cloudflare Worker backend. Vercel does not run
+Wrangler or provide the D1/R2 bindings. Keep the Cloudflare Worker deployed.
+
+1. Update your local code and run npm run deploy to publish the updated Worker
+   and instructor inbox to Cloudflare.
+2. Import this repository into Vercel, with the repository root as Root Directory.
+   The committed vercel.json selects Vite, npm run build and dist/client.
+   If you have dashboard overrides, use those same values. Redeploy main.
+3. vercel.json forwards /api/* and /instructor-login to the existing public
+   Cloudflare Worker. If the Worker URL changes, update both destinations.
+   Static page navigation falls back to index.html.
+4. From your local project folder run npm run vercel:connect. Paste the exact
+   production frontend URL, for example https://your-project.vercel.app.
+   This stores PUBLIC_APP_ORIGIN in the Cloudflare Worker so requests from
+   that frontend pass origin verification. It uses your existing local config.
+   Run this after deploying the updated Worker. Cloudflare login may be needed.
+5. Open the production Vercel URL, sign in as instructor, test a student
+   submission and ID, download a CSV, and check a private document download.
+   Each hostname has its own instructor session, so sign in again on Vercel.
+
+PUBLIC_APP_ORIGIN permits one exact HTTPS frontend origin in addition to the
+Worker itself. Set it to your custom domain if using one. Preview deployment
+URLs are not automatically trusted; their read-only pages may load but writes
+and sign-in are intentionally rejected. Never use a wildcard or trust arbitrary
+forwarded Host headers. Do not copy passwords or API keys into Vercel frontend
+variables. CSV and private document responses are not cached.
+
+If Vercel shows 404, check that it deployed the latest main commit, the Root
+Directory contains package.json, and the Output Directory is dist/client.
+A Vercel-only redeploy does not update the Worker; deploy both when backend
+code changes. Existing database records and files are retained.

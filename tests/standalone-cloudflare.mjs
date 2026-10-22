@@ -35,6 +35,7 @@ const spoof={'oai-authenticated-user-id':'cloudflare-instructor','oai-authentica
 assert.equal((await(await request('/api/portal',{headers:spoof},200)).json()).canSetup,false);
 await request('/api/portal',json({action:'setup'}),401);
 await request('/api/portal?view=instructor',{headers:spoof},403);
+await request('/api/export',{headers:spoof},403);
 await request('/api/instructor-login',{method:'POST',body:new FormData()},403);
 await login('wrong-password','192.0.2.1',401);
 const signed=await login(env.INSTRUCTOR_PASSWORD);
@@ -72,8 +73,37 @@ for(const [level,stream,code] of [['SS1','Art','ART'],['SS1','Commercial','COM']
  assert.equal(result.receipt.studentId,`DEEGEETAL-${level}-${code}-0042`);
  assert.equal(sqlite.prepare('SELECT student_id FROM submissions WHERE id = ?').get(result.receipt.id).student_id,result.receipt.studentId);
 }
+// CSV exports preserve Unicode/multiline reflections, quote special characters,
+// neutralise formulas, and use the same class/search filters as the inbox.
+const csvResponse=await request('/api/export',{headers:{Cookie:cookie}},200);
+assert.match(csvResponse.headers.get('Content-Type'),/text\/csv/);assert.match(csvResponse.headers.get('Cache-Control'),/no-store/);
+const exportBytes=new Uint8Array(await csvResponse.arrayBuffer());assert.deepEqual([...exportBytes.slice(0,3)],[239,187,191]);
+function parseCsv(text){const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++;}else quoted=!quoted;}else if(c===','&&!quoted){row.push(cell);cell='';}else if(c==='\r'&&text[i+1]==='\n'&&!quoted){row.push(cell);rows.push(row);row=[];cell='';i++;}else cell+=c;}return rows;}
+const allRows=parseCsv(new TextDecoder().decode(exportBytes));assert.equal(allRows.length,10);assert.equal(allRows[0][0],'Student ID');assert.ok(allRows.some(r=>r[0]==='DEEGEETAL-SS1-SCI-0042'));
+const exportBy=async(query)=>parseCsv(await(await request('/api/export?'+new URLSearchParams(query),{headers:{Cookie:cookie}},200)).text());
+assert.equal((await exportBy({class:'SS2 Art'})).length,2);
+assert.equal((await exportBy({query:'DEEGEETAL-SS1-SCI-0042'})).length,2);
+assert.equal((await exportBy({class:'SS2 Art',query:'DEEGEETAL-SS1-SCI-0042'})).length,1);
+const trickyTitle='=HYPERLINK("https://example.test","click")';const trickyReflection='I learnt about ₦ costs, "quotes",\nand new lines.';
+sqlite.prepare('UPDATE submissions SET thesis_title=?, reflection=? WHERE id=?').run(trickyTitle,trickyReflection,id);
+const trickyRows=await exportBy({query:'DEEGEETAL-SS1-SCI-0042'});assert.equal(trickyRows[1][4],"'"+trickyTitle);assert.equal(trickyRows[1][5],trickyReflection);
+await request('/api/export',{method:'POST',headers:{Origin:origin,Cookie:cookie}},405);
+// Model Vercel's external rewrite: URL is the Worker, Origin is the frontend.
+const frontend='https://thesis.example.test';
+const proxied=()=>({method:'POST',headers:{Origin:frontend,'Content-Type':'application/json',Cookie:cookie},body:JSON.stringify(settings)});
+await request('/api/portal',proxied(),403);
+env.PUBLIC_APP_ORIGIN=frontend;
+await request('/api/portal',proxied(),200);
+const proxyLoginForm=new FormData();proxyLoginForm.set('password',env.INSTRUCTOR_PASSWORD);
+const proxyLogin=await request('/api/instructor-login',{method:'POST',headers:{Origin:frontend,'cf-connecting-ip':'192.0.2.123'},body:proxyLoginForm},303);
+assert.match(proxyLogin.headers.get('Set-Cookie'),/SameSite=Strict/);assert.equal(proxyLogin.headers.get('Location'),'/?instructor=1');
+await request('/api/instructor-logout',{method:'POST',headers:{Origin:frontend,Cookie:cookie}},200);
+const hostile=json(settings,cookie);hostile.headers.Origin='https://attacker.example.test';hostile.headers['x-forwarded-host']='thesis.example.test';await request('/api/portal',hostile,403);
+const missingOrigin=proxied();delete missingOrigin.headers.Origin;await request('/api/portal',missingOrigin,403);
+env.PUBLIC_APP_ORIGIN='https://thesis.example.test/path';await request('/api/portal',proxied(),403);delete env.PUBLIC_APP_ORIGIN;
+
 for(let i=0;i<8;i++)await login('wrong-password','192.0.2.99',401);await login(env.INSTRUCTOR_PASSWORD,'192.0.2.99',429);
 const out=await request('/api/instructor-logout',{method:'POST',headers:{Origin:origin,Cookie:cookie}},200);assert.match(out.headers.get('Set-Cookie'),/Max-Age=0/);
 const saved=env.SESSION_SECRET;env.SESSION_SECRET='short';assert.equal((await(await request('/api/portal',{headers:{Cookie:cookie}},200)).json()).isInstructor,false);await login(env.INSTRUCTOR_PASSWORD,'192.0.2.5',503);env.SESSION_SECRET=saved;
 assert.equal(await(await request('/',{},200)).text(),'<html>student portal</html>');await request('/api/unknown',{},404);
-console.log('PASS: student ID format, leading zeros, collision retries, simultaneous submissions, saved IDs and non-destructive migration;  standalone instructor sign-in, spoofed identity rejection, tampered/expired sessions, rate limiting, setup, D1 submission rows, 299-word enforcement, private file downloads, logout and unconfigured-auth rejection.');
+console.log('PASS: authenticated CSV exports, class/search filtering, Unicode/quotes/multiline text, spreadsheet formula protection, explicit frontend origin trust and untrusted-origin rejection; student ID format, leading zeros, collision retries, simultaneous submissions, saved IDs and non-destructive migration;  standalone instructor sign-in, spoofed identity rejection, tampered/expired sessions, rate limiting, setup, D1 submission rows, 299-word enforcement, private file downloads, logout and unconfigured-auth rejection.');

@@ -1,3 +1,4 @@
+import { trustedOrigin } from './request-origin';
 import { env } from 'cloudflare:workers';
 import { requests } from './request-context';
 
@@ -23,7 +24,7 @@ export async function getChatGPTUser(){
  }catch{return null;}
 }
 export async function signIn(request:Request):Promise<Response>{
- if(request.headers.get('origin')!==new URL(request.url).origin)return page('This request could not be verified. Please try again.',403);
+ if(!trustedOrigin(request))return page('This request could not be verified. Please try again.',403);
  if(!ready()||!config().DB)return page('Instructor access is not configured yet. Run npm run instructor:setup in the project folder.',503);
  if(Number(request.headers.get('content-length')||0)>4096)return page('This request is too large.',413);
  const ip=request.headers.get('cf-connecting-ip')||'local-preview';
@@ -44,7 +45,7 @@ export async function signIn(request:Request):Promise<Response>{
  return new Response(null,{status:303,headers:{Location:'/?instructor=1','Set-Cookie':cookieName+'='+token+'; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=28800','Cache-Control':'no-store'}});
 }
 export function signOut(request:Request){
- if(request.headers.get('origin')!==new URL(request.url).origin)return Response.json({error:'Unverified request.'},{status:403});
+ if(!trustedOrigin(request))return Response.json({error:'Unverified request.'},{status:403});
  return Response.json({ok:true},{headers:{'Set-Cookie':cookieName+'=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0','Cache-Control':'no-store'}});
 }
 export function page(message='',status=200){
