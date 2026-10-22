@@ -148,3 +148,9 @@ If Vercel shows 404, check that it deployed the latest main commit, the Root
 Directory contains package.json, and the Output Directory is dist/client.
 A Vercel-only redeploy does not update the Worker; deploy both when backend
 code changes. Existing database records and files are retained.
+
+The instructor inbox also offers Export student list CSV. It downloads only
+Student ID, Student name, Class and Department, using the current search and
+class filter. With no filter it includes everyone who has submitted. This is
+a list of submission-associated IDs; the app does not maintain a separate
+student enrolment register or merge different IDs based on matching names.

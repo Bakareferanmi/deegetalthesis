@@ -6,8 +6,14 @@ function cell(value:unknown){
  if(/^[\s]*[=+@-]/.test(text)||/^[\t\r\n]/.test(text))text="'"+text;
  return '"'+text.replace(/"/g,'""')+'"';
 }
+function csv(rows:unknown[][]){return '\uFEFF'+rows.map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';}
+export function studentListCsv(records:Submission[]){
+ const rows:unknown[][]=[['Student ID','Student name','Class','Department']];
+ for(const r of records)rows.push([r.studentId || 'Not assigned (older submission)',r.name,r.level,r.stream]);
+ return csv(rows);
+}
 export function submissionsCsv(records:Submission[]){
  const rows:unknown[][]=[['Student ID','Student name','Class','Department','Thesis title','What I learnt','Document filename','File size (bytes)','Submitted at (UTC)','Submission reference']];
  for(const r of records)rows.push([r.studentId || 'Not assigned (older submission)',r.name,r.level,r.stream,r.title,r.reflection || '',r.filename,r.size,r.submittedAt,r.id]);
- return '\uFEFF'+rows.map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';
+ return csv(rows);
 }
