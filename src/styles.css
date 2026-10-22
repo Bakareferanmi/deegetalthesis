@@ -84,3 +84,34 @@
 .student-id-value>.student-id-prefix{display:block;color:#bdc8d4;font:500 clamp(12px,1.3vw,16px)/1.5 var(--display);letter-spacing:1.2px;margin:0 0 4px;white-space:normal;overflow-wrap:anywhere}.student-id-value>.student-id-digits{display:block;margin:0;font-size:clamp(34px,4vw,48px);line-height:1.1;letter-spacing:4px}
 
 .inbox-student-id{display:flex;flex-direction:column;align-items:flex-start;gap:5px;margin:12px 0 14px;padding:10px 12px;border:1px solid #dce6cd;background:#f0f5e8;border-radius:5px;max-width:100%;width:fit-content;letter-spacing:0}.inbox-student-id>span{font:600 8px var(--body);letter-spacing:1.3px;color:#748362}.inbox-student-id>strong{font:500 12px/1.5 var(--display);color:#304820;overflow-wrap:anywhere;user-select:all}.inbox-export-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 18px;padding:0 0 17px;border-bottom:1px solid var(--line)}.inbox-export-row>span{font-size:10px;color:var(--muted);margin-right:auto}.export-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 11px;min-height:36px;border:1px solid #cbd5bf;border-radius:5px;background:#f1f5e8;font-size:10px;font-weight:600;color:#405533}.export-button:hover{background:#e7efd9}@media(max-width:480px){.inbox-student-id>strong{font-size:11px}.inbox-export-row>span{flex-basis:100%}.export-button{flex:1}}
+
+/* Clearer type, stronger control boundaries, and mobile-first instructions. */
+:root{--muted:#4b5965;--line:#bbc4b3}
+nav button,.form-topline,.form-heading p,.progress-row>span,.step-number,.required,.field-hint,.stream-choice small,.dropzone>span:last-child,.form-bottom,.selected-file small,.review-box small,.receipt-card span,.receipt-reference,.admin-title p,.submission-record p span,.submission-record small,.empty-state,.empty-state p,footer>p,footer>button,.guide-instructions,.guide-step p,.guide-note,.instructor-reflection summary span,.receipt-details>summary>span,.inbox-student-id>span{color:#4b5943}
+.intro h1 span{color:#4c603f}.intro-foot,.deadline-label,.timer small,.art-label,.art-index{color:#495b3d}
+.form-heading p,.field-hint,.form-bottom,.selected-file small,.dropzone>span:last-child,.review-box small,.submission-record small,.guide-note,.instructor-reflection summary span,.receipt-reference{font-size:12px}
+.form-topline,.progress-row>span,.step-number,.stream-choice small,.receipt-card span,.card-eyebrow,.record-class,.inbox-student-id>span,.receipt-details>summary>span,.received-badge,.submission-milestones>span{font-size:11px}
+.field-block>label,.field-block>legend,.stream-choice strong,.level-choice,.admin-card form>label,.admin-card form>.checkbox-label{font-size:14px}
+.stream-choice small{white-space:normal;line-height:1.5}.dropzone strong,.selected-file strong,.review-box p,.empty-state p,.submission-record p,.guide-step p,.text-button{font-size:13px}
+input:not([type=radio]):not([type=checkbox]):not([type=file]),textarea,select{border-color:#78856f;font-size:14px}
+input::placeholder,textarea::placeholder{color:#59664f;opacity:1}
+input:focus,textarea:focus{border-color:#3d5c20;outline:2px solid #3d5c20;outline-offset:2px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline-color:#3d5c20}
+.instructor-link,.level-choice,.stream-choice{border-color:#78856f}.level-choice.active,.stream-choice.active{border-color:#3d5c20;box-shadow:0 0 0 1px #3d5c20;background:#edf3e3}
+.radio-indicator{border-color:#78856f}.progress-track i.filled{background:#496b2b}.dropzone{border-color:#78856f}.upload-icon,.commercial .stream-top>svg{color:#3d5c20}.art .stream-top>svg{color:#8a5136}
+.timer>div:not(:last-child):after{color:#637356}.primary{font-size:14px;font-weight:600}button:disabled{opacity:.72}
+.status-pill,.word-count,.review-box p,.review-reflection>strong,.instructor-reflection summary,.submission-record>a{color:#3d542b}
+.received-badge,.submission-milestones>span{color:#40572e}.submission-milestones svg{color:#496b2b}.id-save-hint{color:#4b5943!important;font-size:12px!important}
+.id-card-label,.id-card-bottom>div>span,.student-id-value>.student-id-prefix{color:#c4cfda}.id-card-top>span,.id-card-label,.id-card-bottom>div>span{font-size:11px}.id-card-bottom button{border-color:#bfd773;min-height:44px}.student-id-value>.student-id-prefix{font-size:14px}
+.success-view>p,.receipt-card strong{font-size:14px}.success-heading-row{flex-wrap:wrap}.received-badge{line-height:1.5}.inbox-export-row>span,.export-button{font-size:12px}.export-button{min-height:44px}.inbox-student-id>strong{font-size:13px}
+.guide-instructions{font-size:14px}.guide-step>span{color:#40572e}.guide-step p{line-height:1.7}.guide-note{color:#40572e}.text-button,.instructor-link{min-height:44px}.inbox-tools .refresh{min-height:44px}
+.mobile-guidelines{display:none}
+@media(max-width:760px){
+ .workspace{padding-top:18px;gap:24px}.mobile-guidelines{display:block;padding:20px;border:1px solid #7f906f;border-left:4px solid #496b2b;border-radius:8px;background:#edf3e3;order:-1}
+ .guidelines-heading{display:flex;align-items:center;gap:11px;color:#2e4720}.guidelines-heading>svg{flex-shrink:0}.guidelines-heading span{font-size:10px;font-weight:700;letter-spacing:1.6px}.guidelines-heading h2{font:600 21px/1.3 var(--display);letter-spacing:-.5px;margin:4px 0 0;color:#19283d}
+ .guidelines-assignment{font-size:14px;line-height:1.75;color:#35462c;white-space:pre-wrap;overflow-wrap:anywhere;margin:15px 0}
+ .mobile-guidelines ul{list-style:none;padding:14px 0 0;margin:0;border-top:1px solid #a9b79c;display:grid;gap:12px}.mobile-guidelines li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.6;color:#35462c}.mobile-guidelines li svg{flex-shrink:0;margin-top:3px;color:#3d5c20}
+ .guidelines-more,.guidelines-retry{display:flex;align-items:center;gap:9px;min-height:44px;font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px;color:#2e4720;padding:10px 0 0;margin-top:8px;text-align:left}
+ input:not([type=radio]):not([type=checkbox]):not([type=file]),textarea,select{font-size:16px}.submission-area{padding:22px 18px}.form-heading p,.form-bottom,.dropzone strong{font-size:13px}.intro .eyebrow,.countdown-top>span:first-child,.timer small,.deadline-label,.admin-title .eyebrow,.guide-modal .eyebrow{font-size:11px}.timer small{letter-spacing:1px}.deadline-label{font-size:12px}.intro-foot{font-size:12px}
+ .form-topline{font-size:10px;letter-spacing:.7px}.instructor-link{font-size:12px}.stream-choice{padding:12px 8px}.stream-choice strong{font-size:12px}.stream-choice small{font-size:11px}.receipt-grid{gap:20px}.success-view h2{font-size:28px}.id-card-bottom{flex-wrap:wrap}.receipt-details>summary>span{float:none;display:block;margin-top:4px}.reflection-footer{flex-wrap:wrap}.guide-instructions{font-size:14px}.guide-note{font-size:12px}.inbox-title>span{font-size:12px}.inbox-student-id>strong{font-size:12px}
+}

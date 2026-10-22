@@ -125,22 +125,24 @@ Wrangler or provide the D1/R2 bindings. Keep the Cloudflare Worker deployed.
 2. Import this repository into Vercel, with the repository root as Root Directory.
    The committed vercel.json selects Vite, npm run build and dist/client.
    If you have dashboard overrides, use those same values. Redeploy main.
-3. vercel.json forwards /api/* and /instructor-login to the existing public
-   Cloudflare Worker. If the Worker URL changes, update both destinations.
+3. vercel.json forwards /api/* to the existing public Cloudflare Worker and redirects
+   /instructor-login to its secure sign-in page. If the Worker URL changes, update both destinations.
    Static page navigation falls back to index.html.
 4. From your local project folder run npm run vercel:connect. Paste the exact
    production frontend URL, for example https://your-project.vercel.app.
    This stores PUBLIC_APP_ORIGIN in the Cloudflare Worker so requests from
    that frontend pass origin verification. It uses your existing local config.
    Run this after deploying the updated Worker. Cloudflare login may be needed.
-5. Open the production Vercel URL, sign in as instructor, test a student
-   submission and ID, download a CSV, and check a private document download.
-   Each hostname has its own instructor session, so sign in again on Vercel.
+5. Open the production Vercel URL, test a student
+   submission and ID, then open Instructor and sign in. Instructor sign-in
+   and the admin workspace open on Cloudflare, using one consistent hostname
+   for the form and session. Download a CSV and check a private document.
 
 PUBLIC_APP_ORIGIN permits one exact HTTPS frontend origin in addition to the
 Worker itself. Set it to your custom domain if using one. Preview deployment
-URLs are not automatically trusted; their read-only pages may load but writes
-and sign-in are intentionally rejected. Never use a wildcard or trust arbitrary
+URLs are not automatically trusted for student writes. Their Instructor link
+redirects to the same Cloudflare sign-in page, where the form uses its own
+trusted origin. Never use a wildcard or trust arbitrary
 forwarded Host headers. Do not copy passwords or API keys into Vercel frontend
 variables. CSV and private document responses are not cached.
 
@@ -154,3 +156,24 @@ Student ID, Student name, Class and Department, using the current search and
 class filter. With no filter it includes everyone who has submitted. This is
 a list of submission-associated IDs; the app does not maintain a separate
 student enrolment register or merge different IDs based on matching names.
+
+## Mobile readability and instructor sign-in
+
+On screens up to 760px, an expanded submission-guidelines card appears first
+in the student workspace, before the introduction, countdown and form. It
+includes the instructor's assignment instructions, allowed files and required
+reflection length, plus access to the full guide. Text, placeholders, metadata,
+selected controls and input boundaries have stronger contrast. Mobile fields
+use 16px text and controls have larger touch targets.
+
+Vercel's /instructor-login uses a temporary redirect to the Cloudflare Worker
+sign-in page. The instructor stays on the Cloudflare admin workspace after
+signing in. This avoids "request could not be verified" errors when a phone
+opens a Vercel alias that differs from PUBLIC_APP_ORIGIN. Existing Vercel
+student submissions still require the correct PUBLIC_APP_ORIGIN setting.
+
+For mobile browsers that omit Origin on a form POST, only an exact trusted
+Referer origin can serve as a fallback. A conflicting or null Origin remains
+rejected, and neither header being present remains rejected. An already-open
+unverified sign-in page offers a link to start again on the Worker hostname.
+Password entry disables automatic capitalisation and offers a Show/Hide button.

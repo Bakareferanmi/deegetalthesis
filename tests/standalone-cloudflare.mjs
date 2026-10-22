@@ -111,6 +111,20 @@ assert.match(proxyLogin.headers.get('Set-Cookie'),/SameSite=Strict/);assert.equa
 await request('/api/instructor-logout',{method:'POST',headers:{Origin:frontend,Cookie:cookie}},200);
 const hostile=json(settings,cookie);hostile.headers.Origin='https://attacker.example.test';hostile.headers['x-forwarded-host']='thesis.example.test';await request('/api/portal',hostile,403);
 const missingOrigin=proxied();delete missingOrigin.headers.Origin;await request('/api/portal',missingOrigin,403);
+// Some mobile form submissions omit Origin. Referer is a fallback only when
+// Origin is absent, and must match the exact Worker or configured frontend.
+const referrerOnly=proxied();delete referrerOnly.headers.Origin;referrerOnly.headers.Referer=frontend+'/instructor-login';await request('/api/portal',referrerOnly,200);
+const evilReferrer=proxied();delete evilReferrer.headers.Origin;evilReferrer.headers.Referer='https://attacker.example.test/instructor-login';await request('/api/portal',evilReferrer,403);
+const conflicting=proxied();conflicting.headers.Origin='https://attacker.example.test';conflicting.headers.Referer=frontend+'/instructor-login';await request('/api/portal',conflicting,403);
+const nullOrigin=proxied();nullOrigin.headers.Origin='null';nullOrigin.headers.Referer=frontend+'/instructor-login';await request('/api/portal',nullOrigin,403);
+const mobileForm=new FormData();mobileForm.set('password',env.INSTRUCTOR_PASSWORD);
+const mobileLogin=await request('/api/instructor-login',{method:'POST',headers:{Referer:origin+'/instructor-login','User-Agent':'Mozilla/5.0 (Linux; Android 11) Mobile','cf-connecting-ip':'192.0.2.124'},body:mobileForm},303);
+const mobileCookie=mobileLogin.headers.get('Set-Cookie').split(';')[0];assert.equal((await(await request('/api/portal',{headers:{Cookie:mobileCookie}},200)).json()).isInstructor,true);
+const rejectedForm=new FormData();rejectedForm.set('password',env.INSTRUCTOR_PASSWORD);
+const rejectedLogin=await request('/api/instructor-login',{method:'POST',headers:{Origin:'https://unconfigured.vercel.app'},body:rejectedForm},403);
+assert.match(await rejectedLogin.text(),new RegExp('href="'+origin+'/instructor-login"'));
+const loginPage=await request('/instructor-login',{},200);const loginHtml=await loginPage.text();assert.match(loginHtml,/autocapitalize="none"/);assert.match(loginHtml,/aria-label="Show password"/);const nonce=loginHtml.match(/<script nonce="([a-z0-9]+)"/)[1];assert.ok(loginPage.headers.get('Content-Security-Policy').includes("script-src 'nonce-"+nonce+"'"));
+const vercelConfig=JSON.parse(await readFile(resolve(root,'vercel.json'),'utf8'));const loginRedirect=vercelConfig.redirects.find(r=>r.source==='/instructor-login');assert.ok(loginRedirect);assert.equal(loginRedirect.permanent,false);assert.equal(new URL(loginRedirect.destination).pathname,'/instructor-login');assert.equal(new URL(loginRedirect.destination).origin,new URL(vercelConfig.rewrites.find(r=>r.source==='/api/:path*').destination).origin);
 env.PUBLIC_APP_ORIGIN='https://thesis.example.test/path';await request('/api/portal',proxied(),403);delete env.PUBLIC_APP_ORIGIN;
 
 for(let i=0;i<8;i++)await login('wrong-password','192.0.2.99',401);await login(env.INSTRUCTOR_PASSWORD,'192.0.2.99',429);
