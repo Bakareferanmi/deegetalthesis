@@ -2,14 +2,23 @@
 
 This is the same student portal and design, prepared for Cloudflare Workers.
 Written submissions go into D1; documents and assignment settings go into R2.
-The source includes your database ID and the bucket name you confirmed.
+The committed configuration uses placeholders. Keep your account-specific values in wrangler.local.jsonc, which Git ignores.
 No passwords or API tokens are included.
 
 ## Setup and deployment on Windows
 
 1. Clone this repository and open its folder in VS Code.
 2. Open Terminal > New Terminal. Check that package.json is in this folder.
-3. Run these commands one at a time:
+3. Copy the configuration template before deploying:
+
+    Copy-Item wrangler.jsonc wrangler.local.jsonc
+
+   Open wrangler.local.jsonc and replace YOUR_D1_DATABASE_NAME,
+   YOUR_D1_DATABASE_ID and YOUR_R2_BUCKET_NAME with your Cloudflare resources.
+   The deploy and instructor-setup scripts automatically use this local file.
+   If you already have a working project, retain your existing local configuration.
+
+4. Run these commands one at a time:
 
     npm install
     npx wrangler login
@@ -17,7 +26,7 @@ No passwords or API tokens are included.
     npm run instructor:setup
 
 The login command opens Cloudflare in your browser. Choose the same account
-that contains deegeetalthesis-db and deegeetalthesis-files.
+that contains the database and bucket configured in your local file.
 
 The deploy command builds the website, applies the idempotent schema, and
 publishes the Worker. It does not delete existing database rows. It prints
@@ -29,14 +38,14 @@ Typing is hidden. It sends the password and an automatically generated
 session secret directly to Cloudflare secrets, without saving them in files.
 If you run setup again, existing instructor sessions are signed out.
 
-4. Open the new URL. Click Instructor, then Sign in. You can also open
+5. Open the new URL. Click Instructor, then Sign in. You can also open
    /instructor-login on that URL.
-5. Sign in with the password you just set, then activate the instructor
+6. Sign in with the password you just set, then activate the instructor
    workspace. Set your deadline and instructions and save.
-6. Submit a small test PDF as a student, including a short reflection.
-7. Confirm the row appears in D1 > deegeetalthesis-db > Tables > submissions,
+7. Submit a small test PDF as a student, including a short reflection.
+8. Confirm the row appears in D1 > your database > Tables > submissions,
    and confirm you can download the PDF while signed in as instructor.
-8. Share the NEW workers.dev URL with students after your test passes.
+9. Share the NEW workers.dev URL with students after your test passes.
 
 ## Existing ChatGPT-hosted site
 
