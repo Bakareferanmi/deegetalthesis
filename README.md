@@ -83,7 +83,7 @@ avoid an npm peer dependency conflict.
 
 ## Student IDs
 
-Each new successful submission is assigned an ID such as DEEGEETAL4827.
+Each new successful submission is assigned an ID such as DEEGEETAL-SS1-SCI-4827.
 The four-digit suffix is randomly generated on the server; a unique database
 index prevents duplicates, and collisions are retried. These IDs identify
 submissions and are not passwords or download credentials.
@@ -97,7 +97,9 @@ tables, applies pending D1 migrations, then deploys the app. Confirm the
 migration prompt. The student_id column is added without deleting records.
 Subsequent deployments skip migrations already applied.
 
-Four decimal digits provide 10,000 unique IDs. If an ID cannot be allocated,
+Four decimal digits provide 10,000 unique IDs per class and department. If an ID cannot be allocated,
 the submission shows an error instead of displaying an unrecorded ID.
 
 Run npm test and npm run build to check the submission flow and frontend.
+
+Student IDs include the submitted class (SS1 or SS2) and department: SCI for Science, ART for Art, COM for Commercial. The random four-digit suffix is unique within that class and department. Existing IDs remain unchanged.

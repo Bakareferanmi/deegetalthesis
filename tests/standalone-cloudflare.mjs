@@ -50,20 +50,28 @@ assert.equal((await(await request('/api/portal',{headers:{Cookie:'__Host-deegeet
 await request('/api/portal',json({action:'setup'},cookie),200);
 const settings={action:'settings',deadline:new Date(Date.now()+86400000).toISOString(),instructions:'A test research assignment.',accepting:true};
 await request('/api/portal',json(settings),403);await request('/api/portal',json(settings,cookie),200);
-const input=(reflection)=>{const fd=new FormData();for(const [k,v] of Object.entries({name:'Test Student',title:'Solar energy in schools',level:'SS1',stream:'Science',reflection}))fd.set(k,v);fd.set('file',new File(['%PDF-1.4\n%%EOF'],'thesis.pdf'));return{method:'POST',headers:{Origin:origin},body:fd}};
+const input=(reflection,level='SS1',stream='Science')=>{const fd=new FormData();for(const [k,v] of Object.entries({name:'Test Student',title:'Solar energy in schools',level,stream,reflection}))fd.set(k,v);fd.set('file',new File(['%PDF-1.4\n%%EOF'],'thesis.pdf'));return{method:'POST',headers:{Origin:origin},body:fd}};
 await request('/api/portal',input(''),400);await request('/api/portal',input(Array(300).fill('learning').join(' ')),400);
 forcedNumbers=[42];
-const submitted=await(await request('/api/portal',input(Array(299).fill('learning').join(' ')),201)).json();const id=submitted.receipt.id;assert.equal(submitted.receipt.studentId,'DEEGEETAL0042');
-const row=sqlite.prepare('SELECT * FROM submissions WHERE id = ?').get(id);assert.equal(row.student_name,'Test Student');assert.equal(row.reflection.split(' ').length,299);assert.equal(row.document_key,'documents/'+id);assert.equal(row.student_id,'DEEGEETAL0042');
+const submitted=await(await request('/api/portal',input(Array(299).fill('learning').join(' ')),201)).json();const id=submitted.receipt.id;assert.equal(submitted.receipt.studentId,'DEEGEETAL-SS1-SCI-0042');
+const row=sqlite.prepare('SELECT * FROM submissions WHERE id = ?').get(id);assert.equal(row.student_name,'Test Student');assert.equal(row.reflection.split(' ').length,299);assert.equal(row.document_key,'documents/'+id);assert.equal(row.student_id,'DEEGEETAL-SS1-SCI-0042');
 await request('/api/files/'+id,{headers:spoof},403);assert.equal(await(await request('/api/files/'+id,{headers:{Cookie:cookie}},200)).text(),'%PDF-1.4\n%%EOF');
 assert.equal((await(await request('/api/portal?view=instructor',{headers:{Cookie:cookie}},200)).json()).submissions.length,1);
 forcedNumbers=[42,42,7001];
-const retried=await(await request('/api/portal',input('I learnt to explain my research clearly.'),201)).json();assert.equal(retried.receipt.studentId,'DEEGEETAL7001');
+const retried=await(await request('/api/portal',input('I learnt to explain my research clearly.'),201)).json();assert.equal(retried.receipt.studentId,'DEEGEETAL-SS1-SCI-7001');
 forcedNumbers=[99,99,100];
 const concurrent=await Promise.all([request('/api/portal',input('I learnt how solar energy works.'),201),request('/api/portal',input('I learnt how to compare energy sources.'),201)]);
-const ids=await Promise.all(concurrent.map(async r=>(await r.json()).receipt.studentId));assert.equal(new Set(ids).size,2);ids.forEach(id=>assert.match(id,/^DEEGEETAL\d{4}$/));
+const ids=await Promise.all(concurrent.map(async r=>(await r.json()).receipt.studentId));assert.equal(new Set(ids).size,2);ids.forEach(id=>assert.match(id,/^DEEGEETAL-SS1-SCI-\d{4}$/));
 const beforeFailure=files.size;forcedNumbers=Array(12).fill(42);const busy=await(await request('/api/portal',input('I learnt how to write references.'),503)).json();assert.match(busy.error,/student ID/);assert.equal(files.size,beforeFailure);
-const inbox=await(await request('/api/portal?view=instructor',{headers:{Cookie:cookie}},200)).json();assert.equal(new Set(inbox.submissions.map(r=>r.studentId)).size,4);assert.equal(inbox.submissions.find(r=>r.id===id).studentId,'DEEGEETAL0042');
+const inbox=await(await request('/api/portal?view=instructor',{headers:{Cookie:cookie}},200)).json();assert.equal(new Set(inbox.submissions.map(r=>r.studentId)).size,4);assert.equal(inbox.submissions.find(r=>r.id===id).studentId,'DEEGEETAL-SS1-SCI-0042');
+
+// Each class/department gets its own random-number space.
+for(const [level,stream,code] of [['SS1','Art','ART'],['SS1','Commercial','COM'],['SS2','Science','SCI'],['SS2','Art','ART'],['SS2','Commercial','COM']]){
+ forcedNumbers=[42];
+ const result=await(await request('/api/portal',input('I learnt to present my findings.',level,stream),201)).json();
+ assert.equal(result.receipt.studentId,`DEEGEETAL-${level}-${code}-0042`);
+ assert.equal(sqlite.prepare('SELECT student_id FROM submissions WHERE id = ?').get(result.receipt.id).student_id,result.receipt.studentId);
+}
 for(let i=0;i<8;i++)await login('wrong-password','192.0.2.99',401);await login(env.INSTRUCTOR_PASSWORD,'192.0.2.99',429);
 const out=await request('/api/instructor-logout',{method:'POST',headers:{Origin:origin,Cookie:cookie}},200);assert.match(out.headers.get('Set-Cookie'),/Max-Age=0/);
 const saved=env.SESSION_SECRET;env.SESSION_SECRET='short';assert.equal((await(await request('/api/portal',{headers:{Cookie:cookie}},200)).json()).isInstructor,false);await login(env.INSTRUCTOR_PASSWORD,'192.0.2.5',503);env.SESSION_SECRET=saved;

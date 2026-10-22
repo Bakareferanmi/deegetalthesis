@@ -27,7 +27,7 @@ export default function SubmissionSuccess({receipt,onDownload,onBack}:{receipt:S
    <div className="id-card-orbit" aria-hidden="true"/><div className="id-card-orbit second" aria-hidden="true"/>
    <div className="id-card-top"><span><GraduationCap size={16}/>STUDENT RECORD</span><ShieldCheck size={18}/></div>
    <span className="id-card-label">YOUR STUDENT ID</span>
-   <strong className="student-id-value" tabIndex={0}>{receipt.studentId.slice(0,-4)}<span>{receipt.studentId.slice(-4)}</span></strong>
+   <strong className="student-id-value" tabIndex={0}><span className="student-id-prefix">{receipt.studentId.slice(0,-4)}</span><span className="student-id-digits">{receipt.studentId.slice(-4)}</span></strong>
    <div className="id-card-bottom"><div><strong>{receipt.name}</strong><span>{receipt.level} · {receipt.stream}</span></div><button type="button" onClick={copyId} aria-label="Copy student ID">{copied?<Check size={15}/>:<Copy size={15}/>}<span>{copied?'Copied':'Copy ID'}</span></button></div>
   </section>}
   <p className="id-save-hint" role="status">{copyError?'Select the ID above to copy it manually.':copied?'Student ID copied. Keep it with your submission receipt.':'Keep your student ID. It identifies this submission in your instructor’s records.'}</p>

@@ -24,7 +24,7 @@ function fromRow(row:SubmissionRow):Submission {
 export async function saveSubmission(record:Submission):Promise<Submission> {
  if(env.DB) {
   for(let attempt=0;attempt<STUDENT_ID_ATTEMPTS;attempt++){
-   const studentId=generateStudentId();
+   const studentId=generateStudentId(record.level,record.stream);
    // The unique index and INSERT are atomic, including simultaneous requests.
    const allocated=await env.DB.prepare(`INSERT INTO submissions
     (id, student_name, thesis_title, class, department, reflection,
@@ -39,7 +39,7 @@ export async function saveSubmission(record:Submission):Promise<Submission> {
   throw new StudentIdUnavailableError();
  }
  for(let attempt=0;attempt<STUDENT_ID_ATTEMPTS;attempt++){
-  const studentId=generateStudentId();
+  const studentId=generateStudentId(record.level,record.stream);
   const key='student-ids/'+studentId;
   const reservation=await bucket().put(key,record.id,{onlyIf:{etagDoesNotMatch:'*'}});
   if(!reservation)continue;
