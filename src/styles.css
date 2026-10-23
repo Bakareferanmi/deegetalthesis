@@ -146,3 +146,14 @@ textarea{line-height:1.8}
 body>#root>footer{flex-wrap:wrap}.footer-credits{flex-basis:100%;display:flex;align-items:center;justify-content:space-between;gap:12px 24px;border-top:1px solid var(--line);padding-top:18px;margin-top:4px;color:#4b5943}
 .footer-credits p{margin:0;font-size:14px;line-height:1.7}.footer-credits a{display:inline-flex;align-items:center;gap:4px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:4px;min-height:44px}.footer-credits a:hover{color:#3d542b}
 @media(max-width:540px){.name-fields{grid-template-columns:1fr;gap:18px}.footer-credits{flex-direction:column;align-items:flex-start;gap:4px;padding-top:16px}.footer-credits p{font-size:14px}}
+
+/* High-contrast text, including helper copy and inactive controls. */
+:root{--ink:#142238;--muted:#35443d}
+nav button,.form-topline,.form-heading p,.progress-row>span,.step-number,.required,.field-hint,.stream-choice small,.dropzone>span:last-child,.form-bottom,.selected-file small,.review-box small,.receipt-card span,.receipt-reference,.admin-title p,.submission-record p span,.submission-record small,.empty-state,.empty-state p,footer>p,footer>button,.footer-credits,.guide-instructions,.guide-step p,.guide-note,.instructor-reflection summary span,.receipt-details>summary>span,.inbox-student-id>span,.intro-foot,.deadline-label,.timer small,.art-label,.art-index,.card-eyebrow,.record-class,.inbox-title>span,.setup-card p,.window-note,.loading,.pdf-preview-heading p,.pdf-preview-thesis,.pdf-preview-footer span{color:#35443d}
+input::placeholder,textarea::placeholder{color:#4b574e;opacity:1}
+.intro h1 span,.form-heading h2 span,.admin-title h1 span,.brand-dot{color:#385326}
+nav .nav-active,.name-fields label,.field-block>label,.field-block>legend,.admin-card form>label,.receipt-card strong,.review-box p,.empty-state h3{color:var(--ink)}
+.status-pill,.word-count,.word-count.within-range,.guide-step>span,.received-badge,.submission-milestones>span,.guide-note,.pdf-check-status{color:#2d4520}
+.error,.reflection-warning,.word-count.over-limit{color:#842e22}
+.id-save-hint{color:#35443d!important}.id-card-label,.id-card-bottom>div>span,.student-id-value>.student-id-prefix{color:#e3eaf2}
+button:disabled{opacity:1}.primary:disabled{background:#dfe5d8;color:#35443d;border:1px solid #87947e}.primary:disabled>svg:last-child{color:#35443d}
