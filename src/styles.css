@@ -157,3 +157,19 @@ nav .nav-active,.name-fields label,.field-block>label,.field-block>legend,.admin
 .error,.reflection-warning,.word-count.over-limit{color:#842e22}
 .id-save-hint{color:#35443d!important}.id-card-label,.id-card-bottom>div>span,.student-id-value>.student-id-prefix{color:#e3eaf2}
 button:disabled{opacity:1}.primary:disabled{background:#dfe5d8;color:#35443d;border:1px solid #87947e}.primary:disabled>svg:last-child{color:#35443d}
+
+/* Keep the animated research illustration visible on small screens. */
+@media(max-width:760px){
+ .research-art{display:block;width:100%;max-width:360px;height:240px;margin:16px auto 20px;background-size:16px 16px}
+ .research-art .paper{left:calc(50% - 68px);top:17px;scale:.78;transform-origin:top left}
+ .research-art .orbital{left:calc(50% - 135px);top:55px;width:270px;height:134px}
+ .research-art .orbit-two{left:calc(50% - 120px);width:240px;height:135px}
+ .research-art .orbit-dot{offset-path:ellipse(135px 67px at 50% 122px)}
+ .research-art .art-label{left:8px;top:32px;font-size:8px;letter-spacing:1px}
+ .research-art .art-badge{right:8px;bottom:24px;padding:9px 12px;font-size:11px}
+ .research-art .art-index{font-size:8px;letter-spacing:1px;bottom:2px}
+}
+@media(max-width:760px) and (prefers-reduced-motion:no-preference){
+ .level-choice:active,.stream-choice:active,.primary:active:not(:disabled){translate:0 1px}
+ .mobile-guidelines{animation:workspace-arrive .5s ease-out both}
+}
