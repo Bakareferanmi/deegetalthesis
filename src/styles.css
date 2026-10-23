@@ -138,3 +138,11 @@ textarea{line-height:1.8}
  .instructor-link{font-size:14px}.brand{font-size:19px}.topbar{gap:8px}.brand-symbol{margin-right:6px}.guide-step{gap:10px}.guide-modal{padding:32px 20px 24px}.guide-step p,.mobile-guidelines li{font-size:15px}.pdf-preview-heading h2{font-size:17px}.pdf-preview-heading p{font-size:13px}.pdf-preview-toolbar{font-size:14px}.pdf-preview-status{font-size:15px}.pdf-preview-footer span,.pdf-preview-footer a{font-size:14px}.pdf-zoom-tools{margin-left:auto}.pdf-preview-toolbar{column-gap:5px}.pdf-preview-toolbar button{width:40px}.inbox-student-id>strong{font-size:14px}
 }
 @media(max-width:380px){.brand{font-size:18px}.brand-symbol{width:25px;margin-right:5px}.instructor-link{padding:8px 6px;gap:5px}.stream-choice strong{font-size:13px}.pdf-zoom-tools{margin-left:0}.pdf-preview-toolbar{justify-content:center}}
+
+/* Student identity and site credits */
+.name-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.name-fields>div{min-width:0}.name-fields label{display:block;font-size:16px;font-weight:500;line-height:1.5;margin-bottom:8px}.name-fields input{width:100%;min-width:0}
+.student-name>.field-hint{display:block;margin-top:10px}
+body>#root>footer{flex-wrap:wrap}.footer-credits{flex-basis:100%;display:flex;align-items:center;justify-content:space-between;gap:12px 24px;border-top:1px solid var(--line);padding-top:18px;margin-top:4px;color:#4b5943}
+.footer-credits p{margin:0;font-size:14px;line-height:1.7}.footer-credits a{display:inline-flex;align-items:center;gap:4px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:4px;min-height:44px}.footer-credits a:hover{color:#3d542b}
+@media(max-width:540px){.name-fields{grid-template-columns:1fr;gap:18px}.footer-credits{flex-direction:column;align-items:flex-start;gap:4px;padding-top:16px}.footer-credits p{font-size:14px}}
