@@ -173,3 +173,30 @@ button:disabled{opacity:1}.primary:disabled{background:#dfe5d8;color:#35443d;bor
  .level-choice:active,.stream-choice:active,.primary:active:not(:disabled){translate:0 1px}
  .mobile-guidelines{animation:workspace-arrive .5s ease-out both}
 }
+
+/* Task feedback: reveal once, acknowledge each completed action. */
+[data-reveal]{animation:none!important;transition:opacity .5s ease-out,translate .5s ease-out}
+[data-reveal=pending]{opacity:0;translate:0 14px}
+[data-reveal=visible]{opacity:1;translate:0 0}
+.progress-track i{position:relative;overflow:hidden}
+.file-verified{color:#2d4520;background:#e3edda}.verified-pages{display:inline-block;color:#2d4520;font-weight:600}
+.submission-transfer{margin:14px 0}.submission-transfer p{font-size:14px;color:#35443d;line-height:1.7;margin:8px 0}
+.transfer-track{height:6px;overflow:hidden;background:#dfe5d8;border-radius:6px}.transfer-track i{display:block;height:100%;background:#496b2b;border-radius:inherit;transition:width .2s ease-out}.transfer-track i.indeterminate{width:35%}
+.id-revealing{user-select:none}.id-card-bottom button.id-copied{background:#d7f67b;color:#142238;border-color:#d7f67b}
+@media(prefers-reduced-motion:no-preference){
+ .progress-track i.filled:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,#ffffffb3,transparent);animation:progress-sweep .65s ease-out both}
+ .selected-file .file-verified{animation:selection-pop .4s ease-out both}.file-verified svg{animation:verified-check .5s .08s ease-out both}.verified-pages{animation:field-arrive .35s .15s ease-out both}
+ .stream-choice.science.active .stream-top>svg{animation:science-confirm .65s ease-out both}
+ .stream-choice.art.active .stream-top>svg{animation:art-confirm .65s ease-out both}
+ .stream-choice.commercial.active .stream-top>svg{animation:commercial-confirm .6s ease-out both}
+ .transfer-track i.indeterminate{animation:transfer-wait 1.3s ease-in-out infinite}
+ .id-settled .student-id-digits{animation:id-settle .35s ease-out both}.id-copied>svg{animation:verified-check .35s ease-out both}
+}
+@keyframes progress-sweep{from{translate:-110% 0}to{translate:110% 0}}
+@keyframes verified-check{from{scale:.6;rotate:-20deg;opacity:0}to{scale:1;rotate:0deg;opacity:1}}
+@keyframes science-confirm{0%,100%{rotate:0deg;translate:0 0}25%{rotate:-12deg;translate:0 -3px}55%{rotate:10deg}80%{rotate:-5deg}}
+@keyframes art-confirm{0%{rotate:-18deg;scale:.8}50%{rotate:12deg;scale:1.12}100%{rotate:0deg;scale:1}}
+@keyframes commercial-confirm{0%,100%{scale:1 1;translate:0 0}40%{scale:1.08 .85;translate:0 2px}70%{scale:1 1.1;translate:0 -3px}}
+@keyframes transfer-wait{from{translate:-110% 0}to{translate:390% 0}}
+@keyframes id-settle{from{scale:1.06}to{scale:1}}
+@media(prefers-reduced-motion:reduce){[data-reveal]{opacity:1;translate:none;transition:none!important}.transfer-track i{transition:none}.transfer-track i.indeterminate{width:100%}}

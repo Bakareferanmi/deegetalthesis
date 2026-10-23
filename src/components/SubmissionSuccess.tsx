@@ -5,6 +5,18 @@ const date=(value:string)=>new Date(value).toLocaleString('en-GB',{timeZone:'Afr
 export default function SubmissionSuccess({receipt,onDownload,onBack}:{receipt:SubmissionReceipt;onDownload:()=>void;onBack:()=>void}){
  const [copied,setCopied]=useState(false),[copyError,setCopyError]=useState(false);
  const heading=useRef<HTMLHeadingElement>(null);
+ const [digits,setDigits]=useState(receipt.studentId?.slice(-4)||''),[revealing,setRevealing]=useState(false);
+ useEffect(()=>{
+  const final=receipt.studentId?.slice(-4)||'';const motion=window.matchMedia('(prefers-reduced-motion: reduce)');
+  if(!final||motion.matches){setDigits(final);setRevealing(false);return;}
+  let frame=0;setRevealing(true);
+  const tick=()=>{frame++;setDigits([...final].map((digit,index)=>frame>=4+index*2?digit:String(Math.floor(Math.random()*10))).join(''));if(frame>=10)finish();};
+  const timer=window.setInterval(tick,65);
+  function finish(){window.clearInterval(timer);setDigits(final);setRevealing(false);}
+  const onMotion=()=>{if(motion.matches)finish();};motion.addEventListener('change',onMotion);tick();
+  return()=>{window.clearInterval(timer);motion.removeEventListener('change',onMotion);};
+ },[receipt.studentId]);
+ useEffect(()=>{if(!copied)return;const timer=window.setTimeout(()=>setCopied(false),2600);return()=>window.clearTimeout(timer);},[copied]);
  useEffect(()=>{heading.current?.focus({preventScroll:true});heading.current?.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});},[]);
  async function copyId(){
   try{
@@ -27,8 +39,8 @@ export default function SubmissionSuccess({receipt,onDownload,onBack}:{receipt:S
    <div className="id-card-orbit" aria-hidden="true"/><div className="id-card-orbit second" aria-hidden="true"/>
    <div className="id-card-top"><span><GraduationCap size={16}/>STUDENT RECORD</span><ShieldCheck size={18}/></div>
    <span className="id-card-label">YOUR STUDENT ID</span>
-   <strong className="student-id-value" tabIndex={0}><span className="student-id-prefix">{receipt.studentId.slice(0,-4)}</span><span className="student-id-digits">{receipt.studentId.slice(-4)}</span></strong>
-   <div className="id-card-bottom"><div><strong>{receipt.name}</strong><span>{receipt.level} · {receipt.stream}</span></div><button type="button" onClick={copyId} aria-label="Copy student ID">{copied?<Check size={15}/>:<Copy size={15}/>}<span>{copied?'Copied':'Copy ID'}</span></button></div>
+   <strong className={"student-id-value "+(revealing?"id-revealing":"id-settled")} tabIndex={0} aria-label={receipt.studentId}><span className="student-id-prefix" aria-hidden="true">{receipt.studentId.slice(0,-4)}</span><span className="student-id-digits" aria-hidden="true">{digits}</span></strong>
+   <div className="id-card-bottom"><div><strong>{receipt.name}</strong><span>{receipt.level} · {receipt.stream}</span></div><button type="button" onClick={copyId} className={copied?"id-copied":""} aria-label={copied?"Student ID copied":"Copy student ID"}>{copied?<Check key="copied" size={15}/>:<Copy key="copy" size={15}/>}<span>{copied?'Copied':'Copy ID'}</span></button></div>
   </section>}
   <p className="id-save-hint" role="status">{copyError?'Select the ID above to copy it manually.':copied?'Student ID copied. Keep it with your submission receipt.':'Keep your student ID. It identifies this submission in your instructor’s records.'}</p>
   <div className="submission-milestones" aria-label="Submission status"><span><Check size={12}/>Document received</span><span><Check size={12}/>Reflection saved</span><span><Check size={12}/>Record created</span></div>
