@@ -93,16 +93,16 @@ const csvResponse=await request('/api/export',{headers:{Cookie:cookie}},200);
 assert.match(csvResponse.headers.get('Content-Type'),/text\/csv/);assert.match(csvResponse.headers.get('Cache-Control'),/no-store/);
 const exportBytes=new Uint8Array(await csvResponse.arrayBuffer());assert.deepEqual([...exportBytes.slice(0,3)],[239,187,191]);
 function parseCsv(text){const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++;}else quoted=!quoted;}else if(c===','&&!quoted){row.push(cell);cell='';}else if(c==='\r'&&text[i+1]==='\n'&&!quoted){row.push(cell);rows.push(row);row=[];cell='';i++;}else cell+=c;}return rows;}
-const allRows=parseCsv(new TextDecoder().decode(exportBytes));assert.equal(allRows.length,10);assert.equal(allRows[0][0],'Student ID');assert.ok(allRows.some(r=>r[0]==='DEEGEETAL-SS1-SCI-0042'));
+const allRows=parseCsv(new TextDecoder().decode(exportBytes));assert.equal(allRows.length,10);assert.equal(allRows[0][0],'Student name');assert.ok(allRows.some(r=>r[2]==='DEEGEETAL-SS1-SCI-0042'));
 const exportBy=async(query)=>parseCsv(await(await request('/api/export?'+new URLSearchParams(query),{headers:{Cookie:cookie}},200)).text());
 
 await request('/api/export?type=students',{headers:spoof},403);
 const studentResponse=await request('/api/export?type=students',{headers:{Cookie:cookie}},200);
 assert.match(studentResponse.headers.get('Content-Disposition'),/deegeetalthesis-students-/);
 const studentRows=parseCsv(await studentResponse.text());
-assert.deepEqual(studentRows[0],['Student ID','Student name','Class','Department']);
-assert.equal(studentRows.length,10);studentRows.forEach(row=>assert.equal(row.length,4));
-const knownStudent=studentRows.find(row=>row[0]==='DEEGEETAL-SS1-SCI-0042');assert.deepEqual(knownStudent,['DEEGEETAL-SS1-SCI-0042','Test Student','SS1','Science']);
+assert.deepEqual(studentRows[0],['Student name','Class','Student ID','Department','Submission date and time (UTC)']);
+assert.equal(studentRows.length,10);studentRows.forEach(row=>assert.equal(row.length,5));
+const knownStudent=studentRows.find(row=>row[2]==='DEEGEETAL-SS1-SCI-0042');assert.deepEqual(knownStudent,['Test Student','SS1','DEEGEETAL-SS1-SCI-0042','Science',row.submitted_at]);
 assert.equal((await exportBy({type:'students',class:'SS2 Commercial'})).length,2);
 assert.equal((await exportBy({type:'students',query:'DEEGEETAL-SS1-SCI-0042'})).length,2);
 assert.equal((await exportBy({type:'students',query:'missing-student'})).length,1);
@@ -111,7 +111,7 @@ assert.equal((await exportBy({query:'DEEGEETAL-SS1-SCI-0042'})).length,2);
 assert.equal((await exportBy({class:'SS2 Art',query:'DEEGEETAL-SS1-SCI-0042'})).length,1);
 const trickyTitle='=HYPERLINK("https://example.test","click")';const trickyReflection='I learnt about ₦ costs, "quotes",\nand new lines.';
 sqlite.prepare('UPDATE submissions SET thesis_title=?, reflection=? WHERE id=?').run(trickyTitle,trickyReflection,id);
-const trickyRows=await exportBy({query:'DEEGEETAL-SS1-SCI-0042'});assert.equal(trickyRows[1][4],"'"+trickyTitle);assert.equal(trickyRows[1][5],trickyReflection);
+const trickyRows=await exportBy({query:'DEEGEETAL-SS1-SCI-0042'});assert.deepEqual(trickyRows[0],studentRows[0]);assert.equal(trickyRows[1].length,5);assert.equal(trickyRows[1][4],row.submitted_at);assert.ok(!trickyRows.flat().includes(trickyTitle));assert.ok(!trickyRows.flat().includes(trickyReflection));
 await request('/api/export',{method:'POST',headers:{Origin:origin,Cookie:cookie}},405);
 // Model Vercel's external rewrite: URL is the Worker, Origin is the frontend.
 const frontend='https://thesis.example.test';
